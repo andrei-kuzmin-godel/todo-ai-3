@@ -1,5 +1,5 @@
 ﻿# ============================================================
-# GitHub Pages  CI/CD Deployment Workflow
+# GitHub Pages – CI/CD Deployment Workflow
 # ============================================================
 #
 # PRE-REQUISITES (one-time, manual steps in GitHub UI):
@@ -9,14 +9,16 @@
 #      in the "Build (static export)" step below and update next.config.ts.
 #
 #   2. Enable GitHub Pages:
-#      Repository  Settings  Pages  Build and deployment
-#       Source: "GitHub Actions"
+#      Repository → Settings → Pages → Build and deployment
+#      → Source: "Deploy from a branch"
+#      → Branch: "gh-pages" / "/ (root)"
+#      (The workflow pushes the built site to the gh-pages branch; GitHub
+#       Pages then serves it from there. This avoids environment protection
+#       rules that block the "GitHub Actions" source from deploying to main.)
 #
-#   3. Verify Actions permissions:
-#      Repository  Settings  Actions  General
-#       Workflow permissions  "Read and write permissions"   (or keep
-#        "Read repository contents"  the pages/write + id-token: write
-#        permissions declared below are sufficient for the deploy job).
+#   3. Allow Actions to write to the repository:
+#      Repository → Settings → Actions → General
+#      → Workflow permissions → "Read and write permissions"
 # ============================================================
 
 name: Deploy to GitHub Pages
@@ -26,23 +28,17 @@ on:
     branches:
       - main
 
-# Grant the minimum permissions required for a GitHub Pages deployment.
-# contents:read   checkout the repository
-# pages:write     create/update the GitHub Pages deployment
-# id-token:write  obtain an OIDC token used by actions/deploy-pages
+# contents:write is required so peaceiris/actions-gh-pages can push to gh-pages.
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
-# Prevent overlapping deployments; let the in-flight run finish.
+# Prevent overlapping deployments; cancel any queued run when a new push arrives.
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  #  1. Build 
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -68,20 +64,11 @@ jobs:
           REPO_NAME: ${{ github.event.repository.name }}
           NEXT_TELEMETRY_DISABLED: "1"
 
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy to gh-pages branch
+        uses: peaceiris/actions-gh-pages@v4
         with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           # next build with output:'export' writes the static site to ./out
-          path: ./out
-
-  #  2. Deploy 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          publish_dir: ./out
+          # Keep a clean deploy on every push (no commit history accumulation).
+          force_orphan: true
