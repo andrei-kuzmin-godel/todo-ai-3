@@ -1,0 +1,25 @@
+﻿# Dependencies
+node_modules
+
+# Build output
+.next
+
+# Version control
+.git
+
+# Development files
+*.md
+.env
+.env.*
+*.log
+npm-debug.log*
+
+# Editor
+.DS_Store
+*.swp
+*.swo
+.vscode
+
+# Docker
+Dockerfile*
+docker-compose*

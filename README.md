@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# My Todos
 
-## Getting Started
+A modern, responsive todo app built with **Next.js 16**, **TypeScript**, and **Tailwind CSS v4**.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss)
+
+---
+
+## Features
+
+- Add, edit (double-click), delete, and toggle todos
+- Filter by All / Active / Completed
+- Clear all completed todos with one click
+- Persistent storage via `localStorage`
+- Fully responsive  mobile-first design
+- Light & dark mode (system preference)
+- Accessible markup (ARIA labels, roles)
+
+---
+
+## Running Locally
+
+### Prerequisites
+
+- Node.js 20+ and npm
+
+### Steps
 
 ```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start the development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To build and run the production server locally:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Running with Docker
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Prerequisites
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (or Docker Engine + Compose)
 
-## Deploy on Vercel
+### Using Docker Compose (recommended)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+docker compose up --build
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The app will be available at [http://localhost:3000](http://localhost:3000).
+
+To stop:
+
+```bash
+docker compose down
+```
+
+### Using Docker directly
+
+```bash
+# Build the image
+docker build -t todo-app .
+
+# Run the container
+docker run -p 3000:3000 todo-app
+```
+
+---
+
+## Project Structure
+
+```
+.
+ app/
+    globals.css        # Global styles (Tailwind v4 import)
+    layout.tsx         # Root layout with metadata
+    page.tsx           # Main page (assembles all components)
+ components/
+    TodoFilter.tsx     # All / Active / Completed filter bar
+    TodoInput.tsx      # Add-todo input form
+    TodoItem.tsx       # Individual todo item (toggle / edit / delete)
+ hooks/
+    useTodos.ts        # State management + localStorage persistence
+ types/
+    todo.ts            # TypeScript type definitions
+ Dockerfile             # Multi-stage production Docker build
+ docker-compose.yml     # Docker Compose configuration
+ .gitattributes         # Consistent line endings across platforms
+```
+
+---
+
+## Tech Stack
+
+| Technology | Purpose |
+|---|---|
+| Next.js 16 (App Router) | React framework |
+| TypeScript | Static typing |
+| Tailwind CSS v4 | Utility-first styling |
+| localStorage | Client-side persistence |
+
+---
+
+## Development
+
+```bash
+npm run lint    # ESLint
+npm run build   # Production build
+```
