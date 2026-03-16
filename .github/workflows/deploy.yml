@@ -1,0 +1,87 @@
+﻿# ============================================================
+# GitHub Pages  CI/CD Deployment Workflow
+# ============================================================
+#
+# PRE-REQUISITES (one-time, manual steps in GitHub UI):
+#
+#   1. REPO_NAME is injected automatically from the repository name.
+#      If the intended GitHub Pages path differs, override REPO_NAME
+#      in the "Build (static export)" step below and update next.config.ts.
+#
+#   2. Enable GitHub Pages:
+#      Repository  Settings  Pages  Build and deployment
+#       Source: "GitHub Actions"
+#
+#   3. Verify Actions permissions:
+#      Repository  Settings  Actions  General
+#       Workflow permissions  "Read and write permissions"   (or keep
+#        "Read repository contents"  the pages/write + id-token: write
+#        permissions declared below are sufficient for the deploy job).
+# ============================================================
+
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+# Grant the minimum permissions required for a GitHub Pages deployment.
+# contents:read   checkout the repository
+# pages:write     create/update the GitHub Pages deployment
+# id-token:write  obtain an OIDC token used by actions/deploy-pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent overlapping deployments; let the in-flight run finish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  #  1. Build 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"   # matches node:20-alpine used in Dockerfile
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (static export)
+        run: npm run build
+        env:
+          NEXT_OUTPUT: export
+          # Automatically set to the repository name (e.g. "todo-ai-3").
+          # This becomes the basePath and assetPrefix in next.config.ts so that
+          # all assets resolve correctly under https://<user>.github.io/<repo>/.
+          # Override this value here if your intended basePath differs.
+          REPO_NAME: ${{ github.event.repository.name }}
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # next build with output:'export' writes the static site to ./out
+          path: ./out
+
+  #  2. Deploy 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
