@@ -24,6 +24,7 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
         value={value}
         onChange={e => setValue(e.target.value)}
         placeholder="What needs to be done?"
+        aria-label="New todo"
         maxLength={500}
         className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm sm:text-base shadow-sm"
       />

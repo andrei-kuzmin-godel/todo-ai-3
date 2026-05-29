@@ -58,13 +58,13 @@ export default function Home() {
           ) : todos.length === 0 ? (
             <div className="p-12 text-center select-none">
               <p className="text-4xl mb-3" aria-hidden="true">
-                {filter === 'completed' ? '' : filter === 'active' ? '' : ''}
+                {filter === 'completed' ? '✅' : filter === 'active' ? '🎉' : '📋'}
               </p>
               <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
                 {filter === 'completed'
                   ? 'No completed todos yet'
                   : filter === 'active'
-                  ? 'Nothing left to do  nice work!'
+                  ? 'Nothing left to do — nice work!'
                   : 'Add your first todo above'}
               </p>
             </div>
@@ -106,7 +106,7 @@ export default function Home() {
         )}
 
         <p className="text-center text-xs text-gray-300 dark:text-gray-700 mt-6 select-none">
-          Double-click a todo to edit  Press Esc to cancel
+          Double-click to edit · Esc to cancel
         </p>
       </div>
     </main>
