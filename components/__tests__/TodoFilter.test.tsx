@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import TodoFilter from '@/components/TodoFilter'
+import type { SortMode } from '@/types/todo'
 
 const defaultProps = {
   filter: 'all' as const,
@@ -9,6 +10,8 @@ const defaultProps = {
   activeCount: 2,
   completedCount: 0,
   onClearCompleted: vi.fn(),
+  sortMode: 'default' as SortMode,
+  setSortMode: vi.fn(),
 }
 
 describe('TodoFilter', () => {
@@ -59,5 +62,34 @@ describe('TodoFilter', () => {
     render(<TodoFilter {...defaultProps} completedCount={2} onClearCompleted={onClearCompleted} />)
     await user.click(screen.getByRole('button', { name: 'Clear completed' }))
     expect(onClearCompleted).toHaveBeenCalled()
+  })
+})
+
+describe('sort toggle', () => {
+  it('renders all three sort buttons', () => {
+    render(<TodoFilter {...defaultProps} />)
+    expect(screen.getByRole('button', { name: 'Default' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Priority' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Deadline' })).toBeInTheDocument()
+  })
+
+  it('Default sort button has aria-pressed true when sortMode is default', () => {
+    render(<TodoFilter {...defaultProps} />)
+    expect(screen.getByRole('button', { name: 'Default' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Priority' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('Priority sort button has aria-pressed true when sortMode is priority', () => {
+    render(<TodoFilter {...defaultProps} sortMode="priority" />)
+    expect(screen.getByRole('button', { name: 'Priority' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Default' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('calls setSortMode with correct value when a sort button is clicked', async () => {
+    const user = userEvent.setup()
+    const setSortMode = vi.fn()
+    render(<TodoFilter {...defaultProps} setSortMode={setSortMode} />)
+    await user.click(screen.getByRole('button', { name: 'Priority' }))
+    expect(setSortMode).toHaveBeenCalledWith('priority')
   })
 })

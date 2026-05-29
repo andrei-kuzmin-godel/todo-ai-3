@@ -1,16 +1,29 @@
-﻿'use client';
+'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent } from 'react';
-import { Todo } from '@/types/todo';
+import { Todo, PriorityLevel } from '@/types/todo';
 
 interface TodoItemProps {
   todo: Todo;
   onToggle: (id: string) => void;
   onEdit: (id: string, text: string) => void;
   onDelete: (id: string) => void;
+  onChangePriority: (id: string, priority: PriorityLevel) => void;
 }
 
-export default function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemProps) {
+const PRIORITY_BORDER: Record<PriorityLevel, string> = {
+  high:   'border-l-red-400',
+  medium: 'border-l-yellow-400',
+  low:    'border-l-emerald-400',
+};
+
+const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string }[] = [
+  { value: 'high',   label: 'High',   dotClass: 'bg-red-400' },
+  { value: 'medium', label: 'Medium', dotClass: 'bg-yellow-400' },
+  { value: 'low',    label: 'Low',    dotClass: 'bg-emerald-400' },
+];
+
+export default function TodoItem({ todo, onToggle, onEdit, onDelete, onChangePriority }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(todo.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -45,12 +58,14 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemP
     }
   };
 
+  const borderLeft = todo.completed ? 'border-l-transparent' : PRIORITY_BORDER[todo.priority ?? 'medium'];
+
   return (
     <li className={`group flex items-center gap-3 p-3.5 rounded-xl transition-all duration-150 ${
       todo.completed
         ? 'bg-gray-50 dark:bg-gray-700/20'
         : 'bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700/80'
-    } shadow-sm border border-gray-100 dark:border-gray-700/30`}>
+    } shadow-sm border-t border-r border-b border-gray-100 dark:border-gray-700/30 border-l-4 ${borderLeft}`}>
 
       {/* Completion toggle */}
       <button
@@ -102,6 +117,26 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete }: TodoItemP
       <div className={`flex items-center gap-1 flex-shrink-0 transition-opacity duration-150 ${
         isEditing ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 focus-within:opacity-100'
       }`}>
+        {!isEditing && !todo.completed && (
+          <div className="flex items-center gap-0.5" role="group" aria-label="Change priority">
+            {PRIORITY_OPTIONS.map(({ value, label, dotClass }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onChangePriority(todo.id, value)}
+                aria-pressed={(todo.priority ?? 'medium') === value}
+                aria-label={`Set ${label} priority`}
+                className={`p-1 rounded transition-all ${
+                  (todo.priority ?? 'medium') === value
+                    ? 'opacity-100'
+                    : 'opacity-40 hover:opacity-80'
+                }`}
+              >
+                <span className={`block w-2.5 h-2.5 rounded-full ${dotClass}`} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        )}
         {!isEditing && !todo.completed && (
           <button
             onClick={handleEditStart}

@@ -1,9 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Todo, FilterType } from '@/types/todo';
+import { Todo, FilterType, PriorityLevel, SortMode } from '@/types/todo';
 
 const STORAGE_KEY = 'todo-ai-3-todos';
+
+const PRIORITY_ORDER: Record<PriorityLevel, number> = { high: 0, medium: 1, low: 2 };
 
 const isValidTodo = (v: unknown): v is Todo =>
   typeof v === 'object' && v !== null &&
@@ -16,6 +18,7 @@ export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -41,7 +44,7 @@ export function useTodos() {
     }
   }, [todos, isLoaded]);
 
-  const addTodo = useCallback((text: string) => {
+  const addTodo = useCallback((text: string, priority: PriorityLevel = 'medium') => {
     const trimmed = text.trim();
     if (!trimmed) return;
     setTodos(prev => [
@@ -50,6 +53,7 @@ export function useTodos() {
         text: trimmed,
         completed: false,
         createdAt: Date.now(),
+        priority,
       },
       ...prev,
     ]);
@@ -79,15 +83,32 @@ export function useTodos() {
     setTodos(prev => prev.filter(todo => !todo.completed));
   }, []);
 
+  const changePriority = useCallback((id: string, priority: PriorityLevel) => {
+    setTodos(prev =>
+      prev.map(todo => (todo.id === id ? { ...todo, priority } : todo))
+    );
+  }, []);
+
   const filteredTodos = useMemo(() => {
     const trimmedQuery = searchQuery.trim().toLowerCase();
-    return todos.filter(todo => {
+    const filtered = todos.filter(todo => {
       if (filter === 'active' && todo.completed) return false;
       if (filter === 'completed' && !todo.completed) return false;
       if (trimmedQuery && !todo.text.toLowerCase().includes(trimmedQuery)) return false;
       return true;
     });
-  }, [todos, filter, searchQuery]);
+
+    if (sortMode === 'priority') {
+      return [...filtered].sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        const pa = PRIORITY_ORDER[a.priority ?? 'medium'];
+        const pb = PRIORITY_ORDER[b.priority ?? 'medium'];
+        return pa - pb;
+      });
+    }
+
+    return filtered;
+  }, [todos, filter, searchQuery, sortMode]);
 
   const activeCount = useMemo(() => todos.filter(todo => !todo.completed).length, [todos]);
   const completedCount = useMemo(() => todos.filter(todo => todo.completed).length, [todos]);
@@ -98,11 +119,14 @@ export function useTodos() {
     setFilter,
     searchQuery,
     setSearchQuery,
+    sortMode,
+    setSortMode,
     addTodo,
     editTodo,
     deleteTodo,
     toggleTodo,
     clearCompleted,
+    changePriority,
     activeCount,
     completedCount,
     totalCount: todos.length,

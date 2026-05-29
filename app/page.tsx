@@ -13,11 +13,14 @@ export default function Home() {
     setFilter,
     searchQuery,
     setSearchQuery,
+    sortMode,
+    setSortMode,
     addTodo,
     editTodo,
     deleteTodo,
     toggleTodo,
     clearCompleted,
+    changePriority,
     activeCount,
     completedCount,
     totalCount,
@@ -98,6 +101,7 @@ export default function Home() {
                   onToggle={toggleTodo}
                   onEdit={editTodo}
                   onDelete={deleteTodo}
+                  onChangePriority={changePriority}
                 />
               ))}
             </ul>
@@ -112,6 +116,8 @@ export default function Home() {
                 activeCount={activeCount}
                 completedCount={completedCount}
                 onClearCompleted={clearCompleted}
+                sortMode={sortMode}
+                setSortMode={setSortMode}
               />
             </div>
           )}

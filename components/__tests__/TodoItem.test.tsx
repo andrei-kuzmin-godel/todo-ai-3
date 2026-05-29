@@ -7,9 +7,17 @@ import type { Todo } from '@/types/todo'
 const todo: Todo = { id: 'test-id', text: 'Test task', completed: false, createdAt: 1000 }
 const completedTodo: Todo = { ...todo, completed: true }
 
+const defaultProps = {
+  todo,
+  onToggle: vi.fn(),
+  onEdit: vi.fn(),
+  onDelete: vi.fn(),
+  onChangePriority: vi.fn(),
+}
+
 describe('TodoItem', () => {
   it('renders todo text and action buttons', () => {
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    render(<TodoItem {...defaultProps} />)
     expect(screen.getByText('Test task')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Mark as complete' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Delete todo' })).toBeInTheDocument()
@@ -18,7 +26,7 @@ describe('TodoItem', () => {
   it('calls onToggle with todo id when toggle button is clicked', async () => {
     const user = userEvent.setup()
     const onToggle = vi.fn()
-    render(<TodoItem todo={todo} onToggle={onToggle} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    render(<TodoItem {...defaultProps} onToggle={onToggle} />)
     await user.click(screen.getByRole('button', { name: 'Mark as complete' }))
     expect(onToggle).toHaveBeenCalledWith('test-id')
   })
@@ -26,19 +34,19 @@ describe('TodoItem', () => {
   it('calls onDelete with todo id when delete button is clicked', async () => {
     const user = userEvent.setup()
     const onDelete = vi.fn()
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onEdit={vi.fn()} onDelete={onDelete} />)
+    render(<TodoItem {...defaultProps} onDelete={onDelete} />)
     await user.click(screen.getByRole('button', { name: 'Delete todo' }))
     expect(onDelete).toHaveBeenCalledWith('test-id')
   })
 
   it('shows "Mark as incomplete" label for a completed todo', () => {
-    render(<TodoItem todo={completedTodo} onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    render(<TodoItem {...defaultProps} todo={completedTodo} />)
     expect(screen.getByRole('button', { name: 'Mark as incomplete' })).toBeInTheDocument()
   })
 
   it('enters edit mode on double-click', async () => {
     const user = userEvent.setup()
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onEdit={vi.fn()} onDelete={vi.fn()} />)
+    render(<TodoItem {...defaultProps} />)
     await user.dblClick(screen.getByText('Test task'))
     expect(screen.getByRole('textbox', { name: 'Edit todo text' })).toBeInTheDocument()
   })
@@ -46,7 +54,7 @@ describe('TodoItem', () => {
   it('saves edit on Enter and calls onEdit with new text', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onEdit={onEdit} onDelete={vi.fn()} />)
+    render(<TodoItem {...defaultProps} onEdit={onEdit} />)
     await user.dblClick(screen.getByText('Test task'))
     const editInput = screen.getByRole('textbox', { name: 'Edit todo text' })
     await user.clear(editInput)
@@ -58,7 +66,7 @@ describe('TodoItem', () => {
   it('cancels edit on Escape without calling onEdit', async () => {
     const user = userEvent.setup()
     const onEdit = vi.fn()
-    render(<TodoItem todo={todo} onToggle={vi.fn()} onEdit={onEdit} onDelete={vi.fn()} />)
+    render(<TodoItem {...defaultProps} onEdit={onEdit} />)
     await user.dblClick(screen.getByText('Test task'))
     const editInput = screen.getByRole('textbox', { name: 'Edit todo text' })
     await user.clear(editInput)
@@ -66,5 +74,70 @@ describe('TodoItem', () => {
     await user.keyboard('{Escape}')
     expect(onEdit).not.toHaveBeenCalled()
     expect(screen.getByText('Test task')).toBeInTheDocument()
+  })
+})
+
+describe('priority border', () => {
+  it('applies border-l-red-400 for high priority active todo', () => {
+    const highTodo: Todo = { ...todo, priority: 'high' }
+    const { container } = render(<TodoItem {...defaultProps} todo={highTodo} />)
+    expect(container.firstChild).toHaveClass('border-l-red-400')
+  })
+
+  it('applies border-l-yellow-400 for medium priority active todo', () => {
+    const medTodo: Todo = { ...todo, priority: 'medium' }
+    const { container } = render(<TodoItem {...defaultProps} todo={medTodo} />)
+    expect(container.firstChild).toHaveClass('border-l-yellow-400')
+  })
+
+  it('applies border-l-emerald-400 for low priority active todo', () => {
+    const lowTodo: Todo = { ...todo, priority: 'low' }
+    const { container } = render(<TodoItem {...defaultProps} todo={lowTodo} />)
+    expect(container.firstChild).toHaveClass('border-l-emerald-400')
+  })
+
+  it('applies border-l-yellow-400 for todo with undefined priority (defaults to medium)', () => {
+    const { container } = render(<TodoItem {...defaultProps} todo={todo} />)
+    expect(container.firstChild).toHaveClass('border-l-yellow-400')
+  })
+
+  it('applies border-l-transparent for a completed todo', () => {
+    const { container } = render(<TodoItem {...defaultProps} todo={completedTodo} />)
+    expect(container.firstChild).toHaveClass('border-l-transparent')
+  })
+})
+
+describe('inline priority selector', () => {
+  it('renders priority pill buttons for an active todo', () => {
+    render(<TodoItem {...defaultProps} />)
+    expect(screen.getByRole('button', { name: 'Set High priority' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Set Medium priority' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Set Low priority' })).toBeInTheDocument()
+  })
+
+  it('does not render priority pills for a completed todo', () => {
+    render(<TodoItem {...defaultProps} todo={completedTodo} />)
+    expect(screen.queryByRole('button', { name: 'Set High priority' })).not.toBeInTheDocument()
+  })
+
+  it('aria-pressed reflects current priority (medium by default)', () => {
+    render(<TodoItem {...defaultProps} />)
+    expect(screen.getByRole('button', { name: 'Set Medium priority' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Set High priority' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('aria-pressed reflects explicitly set priority', () => {
+    const highTodo: Todo = { ...todo, priority: 'high' }
+    render(<TodoItem {...defaultProps} todo={highTodo} />)
+    expect(screen.getByRole('button', { name: 'Set High priority' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: 'Set Medium priority' })).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('calls onChangePriority with todo id and new priority when a pill is clicked', async () => {
+    const user = userEvent.setup()
+    const onChangePriority = vi.fn()
+    render(<TodoItem {...defaultProps} onChangePriority={onChangePriority} />)
+    await user.click(screen.getByRole('button', { name: 'Set High priority' }))
+    expect(onChangePriority).toHaveBeenCalledWith('test-id', 'high')
   })
 })
