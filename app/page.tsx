@@ -3,6 +3,7 @@
 import TodoInput from '@/components/TodoInput';
 import TodoItem from '@/components/TodoItem';
 import TodoFilter from '@/components/TodoFilter';
+import SearchInput from '@/components/SearchInput';
 import { useTodos } from '@/hooks/useTodos';
 
 export default function Home() {
@@ -10,6 +11,8 @@ export default function Home() {
     todos,
     filter,
     setFilter,
+    searchQuery,
+    setSearchQuery,
     addTodo,
     editTodo,
     deleteTodo,
@@ -49,11 +52,29 @@ export default function Home() {
             <TodoInput onAdd={addTodo} />
           </div>
 
+          {/* Search Section */}
+          {totalCount > 0 && (
+            <div className="px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-gray-700/50">
+              <SearchInput
+                query={searchQuery}
+                onChange={setSearchQuery}
+                onClear={() => setSearchQuery('')}
+              />
+            </div>
+          )}
+
           {/* List Section */}
           {!isLoaded ? (
             <div className="p-10 flex flex-col items-center gap-3 text-gray-400 dark:text-gray-500">
               <div className="w-8 h-8 border-2 border-indigo-200 dark:border-indigo-800 border-t-indigo-500 rounded-full animate-spin" />
               <span className="text-sm">Loading</span>
+            </div>
+          ) : todos.length === 0 && searchQuery.trim() ? (
+            <div className="p-12 text-center select-none">
+              <p className="text-4xl mb-3" aria-hidden="true">🔍</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm font-medium">
+                No todos match your search.
+              </p>
             </div>
           ) : todos.length === 0 ? (
             <div className="p-12 text-center select-none">
