@@ -1,9 +1,16 @@
 ﻿'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Todo, FilterType } from '@/types/todo';
 
 const STORAGE_KEY = 'todo-ai-3-todos';
+
+const isValidTodo = (v: unknown): v is Todo =>
+  typeof v === 'object' && v !== null &&
+  typeof (v as Todo).id === 'string' &&
+  typeof (v as Todo).text === 'string' &&
+  typeof (v as Todo).completed === 'boolean' &&
+  typeof (v as Todo).createdAt === 'number';
 
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -14,7 +21,9 @@ export function useTodos() {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        setTodos(JSON.parse(stored));
+        const parsed: unknown = JSON.parse(stored);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setTodos(Array.isArray(parsed) ? parsed.filter(isValidTodo) : []);
       }
     } catch {
       // Ignore parse errors; start with empty list
@@ -69,14 +78,14 @@ export function useTodos() {
     setTodos(prev => prev.filter(todo => !todo.completed));
   }, []);
 
-  const filteredTodos = todos.filter(todo => {
+  const filteredTodos = useMemo(() => todos.filter(todo => {
     if (filter === 'active') return !todo.completed;
     if (filter === 'completed') return todo.completed;
     return true;
-  });
+  }), [todos, filter]);
 
-  const activeCount = todos.filter(todo => !todo.completed).length;
-  const completedCount = todos.filter(todo => todo.completed).length;
+  const activeCount = useMemo(() => todos.filter(todo => !todo.completed).length, [todos]);
+  const completedCount = useMemo(() => todos.filter(todo => todo.completed).length, [todos]);
 
   return {
     todos: filteredTodos,
