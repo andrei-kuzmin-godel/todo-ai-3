@@ -15,6 +15,7 @@ const isValidTodo = (v: unknown): v is Todo =>
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -78,11 +79,15 @@ export function useTodos() {
     setTodos(prev => prev.filter(todo => !todo.completed));
   }, []);
 
-  const filteredTodos = useMemo(() => todos.filter(todo => {
-    if (filter === 'active') return !todo.completed;
-    if (filter === 'completed') return todo.completed;
-    return true;
-  }), [todos, filter]);
+  const filteredTodos = useMemo(() => {
+    const trimmedQuery = searchQuery.trim().toLowerCase();
+    return todos.filter(todo => {
+      if (filter === 'active' && todo.completed) return false;
+      if (filter === 'completed' && !todo.completed) return false;
+      if (trimmedQuery && !todo.text.toLowerCase().includes(trimmedQuery)) return false;
+      return true;
+    });
+  }, [todos, filter, searchQuery]);
 
   const activeCount = useMemo(() => todos.filter(todo => !todo.completed).length, [todos]);
   const completedCount = useMemo(() => todos.filter(todo => todo.completed).length, [todos]);
@@ -91,6 +96,8 @@ export function useTodos() {
     todos: filteredTodos,
     filter,
     setFilter,
+    searchQuery,
+    setSearchQuery,
     addTodo,
     editTodo,
     deleteTodo,
