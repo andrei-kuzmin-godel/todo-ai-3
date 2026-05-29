@@ -6,9 +6,16 @@
 npm run dev    # dev server on http://localhost:3000
 npm run build  # production build
 npm run lint   # ESLint
+npm test       # run tests (Vitest, watch mode)
+npm run test:coverage  # single run with coverage report
 ```
 
-No test framework exists — there is no `npm test`.
+## Testing
+
+- **Framework**: Vitest + React Testing Library + jsdom
+- Test files live in `__tests__/` subdirectories next to the source they test
+- `hooks/__tests__/useTodos.test.ts` — hook unit tests (CRUD, computed values, localStorage)
+- `components/__tests__/Todo*.test.tsx` — component interaction tests
 
 ## Architecture
 
