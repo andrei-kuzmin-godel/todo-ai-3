@@ -18,7 +18,7 @@ export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortMode, setSortMode] = useState<SortMode>('default');
+  const [sortMode, setSortMode] = useState<SortMode>('priority');
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
