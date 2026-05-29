@@ -17,7 +17,6 @@ const isValidTodo = (v: unknown): v is Todo =>
 export function useTodos() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<FilterType>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortMode, setSortMode] = useState<SortMode>('priority');
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -90,11 +89,9 @@ export function useTodos() {
   }, []);
 
   const filteredTodos = useMemo(() => {
-    const trimmedQuery = searchQuery.trim().toLowerCase();
     const filtered = todos.filter(todo => {
       if (filter === 'active' && todo.completed) return false;
       if (filter === 'completed' && !todo.completed) return false;
-      if (trimmedQuery && !todo.text.toLowerCase().includes(trimmedQuery)) return false;
       return true;
     });
 
@@ -108,7 +105,7 @@ export function useTodos() {
     }
 
     return filtered;
-  }, [todos, filter, searchQuery, sortMode]);
+  }, [todos, filter, sortMode]);
 
   const activeCount = useMemo(() => todos.filter(todo => !todo.completed).length, [todos]);
   const completedCount = useMemo(() => todos.filter(todo => todo.completed).length, [todos]);
@@ -117,8 +114,6 @@ export function useTodos() {
     todos: filteredTodos,
     filter,
     setFilter,
-    searchQuery,
-    setSearchQuery,
     sortMode,
     setSortMode,
     addTodo,
