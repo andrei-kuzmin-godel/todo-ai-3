@@ -184,6 +184,92 @@ describe('localStorage', () => {
   })
 })
 
+describe('addTodo with priority', () => {
+  it('stores the given priority on the todo', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Urgent', 'high') })
+    expect(result.current.todos[0].priority).toBe('high')
+  })
+
+  it('defaults to medium when no priority argument is given', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Normal task') })
+    expect(result.current.todos[0].priority).toBe('medium')
+  })
+})
+
+describe('changePriority', () => {
+  it('updates the priority of the correct todo', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Task') })
+    const id = result.current.todos[0].id
+    act(() => { result.current.changePriority(id, 'low') })
+    expect(result.current.todos[0].priority).toBe('low')
+  })
+
+  it('does not affect other todos', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('A') })
+    act(() => { result.current.addTodo('B') })
+    const idA = result.current.todos.find(t => t.text === 'A')!.id
+    act(() => { result.current.changePriority(idA, 'high') })
+    const todoB = result.current.todos.find(t => t.text === 'B')!
+    expect(todoB.priority).toBe('medium')
+  })
+})
+
+describe('priority sort', () => {
+  it('sortMode default returns insertion order (newest first)', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Low task', 'low') })
+    act(() => { result.current.addTodo('High task', 'high') })
+    expect(result.current.todos[0].text).toBe('High task')
+  })
+
+  it('sortMode priority orders High then Medium then Low', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Low task', 'low') })
+    act(() => { result.current.addTodo('High task', 'high') })
+    act(() => { result.current.addTodo('Medium task', 'medium') })
+    act(() => { result.current.setSortMode('priority') })
+    const texts = result.current.todos.map(t => t.text)
+    expect(texts).toEqual(['High task', 'Medium task', 'Low task'])
+  })
+
+  it('completed todos appear after active ones in priority sort', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Low active', 'low') })
+    act(() => { result.current.addTodo('High done', 'high') })
+    const doneId = result.current.todos.find(t => t.text === 'High done')!.id
+    act(() => { result.current.toggleTodo(doneId) })
+    act(() => { result.current.setSortMode('priority') })
+    const texts = result.current.todos.map(t => t.text)
+    expect(texts[0]).toBe('Low active')
+    expect(texts[1]).toBe('High done')
+  })
+
+  it('treats undefined priority as medium in priority sort', () => {
+    const stored = [
+      { id: '1', text: 'Old todo', completed: false, createdAt: 1000 },
+      { id: '2', text: 'High todo', completed: false, createdAt: 999, priority: 'high' },
+      { id: '3', text: 'Low todo', completed: false, createdAt: 998, priority: 'low' },
+    ]
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.setSortMode('priority') })
+    const texts = result.current.todos.map(t => t.text)
+    expect(texts).toEqual(['High todo', 'Old todo', 'Low todo'])
+  })
+
+  it('sortMode deadline behaves like default (no deadline field yet)', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Low task', 'low') })
+    act(() => { result.current.addTodo('High task', 'high') })
+    act(() => { result.current.setSortMode('deadline') })
+    expect(result.current.todos[0].text).toBe('High task')
+  })
+})
+
 describe('searchQuery', () => {
   it('returns all todos when searchQuery is empty string', () => {
     const { result } = renderHook(() => useTodos())
