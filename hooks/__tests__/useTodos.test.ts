@@ -219,10 +219,16 @@ describe('changePriority', () => {
 })
 
 describe('priority sort', () => {
+  it('initial sortMode is priority', () => {
+    const { result } = renderHook(() => useTodos())
+    expect(result.current.sortMode).toBe('priority')
+  })
+
   it('sortMode default returns insertion order (newest first)', () => {
     const { result } = renderHook(() => useTodos())
     act(() => { result.current.addTodo('Low task', 'low') })
     act(() => { result.current.addTodo('High task', 'high') })
+    act(() => { result.current.setSortMode('default') })
     expect(result.current.todos[0].text).toBe('High task')
   })
 

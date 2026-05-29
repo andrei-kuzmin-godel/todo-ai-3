@@ -17,6 +17,12 @@ const PRIORITY_BORDER: Record<PriorityLevel, string> = {
   low:    'border-l-emerald-400',
 };
 
+const PRIORITY_BG: Record<PriorityLevel, string> = {
+  high:   'bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20',
+  medium: 'bg-amber-50 dark:bg-amber-900/10 hover:bg-amber-100 dark:hover:bg-amber-900/20',
+  low:    'bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/20',
+};
+
 const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string }[] = [
   { value: 'high',   label: 'High',   dotClass: 'bg-red-400' },
   { value: 'medium', label: 'Medium', dotClass: 'bg-yellow-400' },
@@ -64,7 +70,7 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete, onChangePri
     <li className={`group flex items-center gap-3 p-3.5 rounded-xl transition-all duration-150 ${
       todo.completed
         ? 'bg-gray-50 dark:bg-gray-700/20'
-        : 'bg-white dark:bg-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-700/80'
+        : PRIORITY_BG[todo.priority ?? 'medium']
     } shadow-sm border-t border-r border-b border-gray-100 dark:border-gray-700/30 border-l-4 ${borderLeft}`}>
 
       {/* Completion toggle */}
