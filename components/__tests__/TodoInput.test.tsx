@@ -28,7 +28,7 @@ describe('TodoInput', () => {
     render(<TodoInput onAdd={onAdd} />)
     await user.type(screen.getByRole('textbox'), 'Buy milk')
     await user.click(screen.getByRole('button', { name: 'Add todo' }))
-    expect(onAdd).toHaveBeenCalledWith('Buy milk', 'medium')
+    expect(onAdd).toHaveBeenCalledWith('Buy milk', 'medium', undefined)
   })
 
   it('clears input after submit', async () => {
@@ -80,7 +80,7 @@ describe('priority selector', () => {
     await user.click(screen.getByRole('button', { name: 'High priority' }))
     await user.type(screen.getByRole('textbox'), 'Urgent task')
     await user.click(screen.getByRole('button', { name: 'Add todo' }))
-    expect(onAdd).toHaveBeenCalledWith('Urgent task', 'high')
+    expect(onAdd).toHaveBeenCalledWith('Urgent task', 'high', undefined)
   })
 
   it('resets priority to medium after form submit', async () => {

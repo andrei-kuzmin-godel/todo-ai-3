@@ -267,11 +267,50 @@ describe('priority sort', () => {
     expect(texts).toEqual(['High todo', 'Old todo', 'Low todo'])
   })
 
-  it('sortMode deadline behaves like default (no deadline field yet)', () => {
+  it('addTodo stores the given deadline', () => {
     const { result } = renderHook(() => useTodos())
-    act(() => { result.current.addTodo('Low task', 'low') })
-    act(() => { result.current.addTodo('High task', 'high') })
+    const ts = new Date(2030, 0, 15).getTime()
+    act(() => { result.current.addTodo('Task', 'medium', ts) })
+    expect(result.current.todos[0].deadline).toBe(ts)
+  })
+
+  it('addTodo without deadline stores no deadline field', () => {
+    const { result } = renderHook(() => useTodos())
+    act(() => { result.current.addTodo('Task') })
+    expect(result.current.todos[0].deadline).toBeUndefined()
+  })
+
+  it('sortMode deadline orders earlier deadlines first', () => {
+    const { result } = renderHook(() => useTodos())
+    const near = new Date(2030, 0, 1).getTime()
+    const far  = new Date(2030, 5, 1).getTime()
+    act(() => { result.current.addTodo('Far task', 'medium', far) })
+    act(() => { result.current.addTodo('Near task', 'medium', near) })
     act(() => { result.current.setSortMode('deadline') })
-    expect(result.current.todos[0].text).toBe('High task')
+    expect(result.current.todos[0].text).toBe('Near task')
+    expect(result.current.todos[1].text).toBe('Far task')
+  })
+
+  it('todos without deadlines sort last in deadline mode', () => {
+    const { result } = renderHook(() => useTodos())
+    const ts = new Date(2030, 0, 1).getTime()
+    act(() => { result.current.addTodo('No deadline') })
+    act(() => { result.current.addTodo('Has deadline', 'medium', ts) })
+    act(() => { result.current.setSortMode('deadline') })
+    expect(result.current.todos[0].text).toBe('Has deadline')
+    expect(result.current.todos[1].text).toBe('No deadline')
+  })
+
+  it('completed todos sort after active ones in deadline mode', () => {
+    const { result } = renderHook(() => useTodos())
+    const near = new Date(2030, 0, 1).getTime()
+    const far  = new Date(2030, 5, 1).getTime()
+    act(() => { result.current.addTodo('Done early', 'medium', near) })
+    act(() => { result.current.addTodo('Active late', 'medium', far) })
+    const doneId = result.current.todos.find(t => t.text === 'Done early')!.id
+    act(() => { result.current.toggleTodo(doneId) })
+    act(() => { result.current.setSortMode('deadline') })
+    expect(result.current.todos[0].text).toBe('Active late')
+    expect(result.current.todos[1].text).toBe('Done early')
   })
 })
