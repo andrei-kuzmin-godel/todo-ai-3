@@ -45,7 +45,7 @@ export default function Home() {
         </header>
 
         {/* Main Card */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-indigo-100/60 dark:shadow-black/40 border border-white/60 dark:border-gray-700/50 overflow-hidden">
+        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-indigo-100/60 dark:shadow-black/40 border border-white/60 dark:border-gray-700/50">
 
           {/* Input Section */}
           <div className="p-4 sm:p-6 border-b border-gray-100 dark:border-gray-700/50">
@@ -88,7 +88,7 @@ export default function Home() {
 
           {/* Footer  Filter bar */}
           {totalCount > 0 && (
-            <div className="px-4 sm:px-5 py-3.5 border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/60 dark:bg-gray-800/60">
+            <div className="px-4 sm:px-5 py-3.5 border-t border-gray-100 dark:border-gray-700/50 bg-gray-50/60 dark:bg-gray-800/60 rounded-b-2xl">
               <TodoFilter
                 filter={filter}
                 setFilter={setFilter}
