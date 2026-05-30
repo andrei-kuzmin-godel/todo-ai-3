@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { PriorityLevel } from '@/types/todo';
+import DatePicker from '@/components/DatePicker';
 
 interface TodoInputProps {
   onAdd: (text: string, priority: PriorityLevel, deadline?: number) => void;
@@ -13,38 +14,10 @@ const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string 
   { value: 'low',    label: 'Low',    dotClass: 'bg-emerald-400' },
 ];
 
-// Built once at module load — constructing an Intl.DateTimeFormat is expensive
-// and must not happen on every render (mirrors TodoItem's DEADLINE_FORMATTER).
-const DATE_LABEL_FORMATTER = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
-
-// `deadline` is a YYYY-MM-DD string. Parse it as a local date (same approach as
-// handleSubmit) so the label shows the picked day, with no UTC off-by-one.
-function formatDeadlineLabel(deadline: string): string {
-  const [y, m, d] = deadline.split('-').map(Number);
-  return DATE_LABEL_FORMATTER.format(new Date(y, m - 1, d));
-}
-
 export default function TodoInput({ onAdd }: TodoInputProps) {
   const [value, setValue] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('medium');
   const [deadline, setDeadline] = useState('');
-  // Remembers the deadline at the moment the native picker opens, so an iOS
-  // "tap outside to dismiss" (which commits the shown date, then fires the
-  // input's `cancel` event) can be reverted to whatever was set before.
-  const deadlineBeforePicker = useRef('');
-  const dateInputRef = useRef<HTMLInputElement>(null);
-
-  // The `cancel` event doesn't bubble, so React's root event delegation never
-  // sees it — attach the listener directly to the date input. Reverting to the
-  // pre-open value undoes the spurious change iOS fires when the picker is
-  // dismissed by tapping outside, while leaving real selections untouched.
-  useEffect(() => {
-    const input = dateInputRef.current;
-    if (!input) return;
-    const handleCancel = () => setDeadline(deadlineBeforePicker.current);
-    input.addEventListener('cancel', handleCancel);
-    return () => input.removeEventListener('cancel', handleCancel);
-  }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -113,55 +86,9 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
           ))}
         </div>
 
-        {/* Due-date pill. The native date input is overlaid transparently on
-            top, so tapping the pill opens the OS picker directly — reliable on
-            mobile (iOS Safari) where showPicker() is not. */}
-        <div
-          className={`relative flex items-center gap-1 rounded-lg text-xs font-medium transition-all border ${
-            deadline
-              ? 'border-indigo-200 dark:border-indigo-500/40 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
-              : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
-          }`}
-        >
-          {/* Visual label (non-interactive — the input overlay handles taps) */}
-          <span className="flex items-center gap-1.5 pl-2.5 pr-2 py-1 pointer-events-none">
-            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
-            </svg>
-            {deadline ? formatDeadlineLabel(deadline) : 'Due date'}
-          </span>
-
-          {/* Real date input, transparent and stretched over the label so a tap
-              anywhere on the pill opens the native picker. When a date is set it
-              stops short of the clear button so that stays tappable. */}
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={deadline}
-            onChange={e => setDeadline(e.target.value)}
-            onFocus={() => { deadlineBeforePicker.current = deadline; }}
-            title="Set a due date"
-            aria-label="Due date (optional)"
-            className={`absolute inset-y-0 left-0 opacity-0 cursor-pointer ${deadline ? 'right-7' : 'right-0'}`}
-          />
-
-          {deadline && (
-            <button
-              type="button"
-              onClick={() => setDeadline('')}
-              aria-label="Clear due date"
-              className="relative z-10 flex items-center justify-center pr-2 py-1 text-indigo-400 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          )}
-        </div>
+        {/* Due-date picker. Custom popover calendar (not the native date input):
+            tapping outside closes it without applying a date — see DatePicker. */}
+        <DatePicker value={deadline} onChange={setDeadline} />
       </div>
     </form>
   );
