@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, FormEvent } from 'react';
+import { useState, FormEvent } from 'react';
 import { PriorityLevel } from '@/types/todo';
 
 interface TodoInputProps {
@@ -28,7 +28,6 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
   const [value, setValue] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('medium');
   const [deadline, setDeadline] = useState('');
-  const dateInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -43,18 +42,6 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
     setValue('');
     setPriority('medium');
     setDeadline('');
-  };
-
-  const openDatePicker = () => {
-    const input = dateInputRef.current;
-    if (!input) return;
-    // showPicker() is supported in all current evergreen browsers; the catch
-    // covers the rare case where it's unavailable or blocked.
-    try {
-      input.showPicker();
-    } catch {
-      input.focus();
-    }
   };
 
   return (
@@ -109,21 +96,18 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
           ))}
         </div>
 
-        {/* Due-date pill — clicking opens the native picker; never a blank box */}
+        {/* Due-date pill. The native date input is overlaid transparently on
+            top, so tapping the pill opens the OS picker directly — reliable on
+            mobile (iOS Safari) where showPicker() is not. */}
         <div
-          className={`flex items-center gap-1 rounded-lg text-xs font-medium transition-all border ${
+          className={`relative flex items-center gap-1 rounded-lg text-xs font-medium transition-all border ${
             deadline
               ? 'border-indigo-200 dark:border-indigo-500/40 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300'
               : 'border-gray-200 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700/50'
           }`}
         >
-          <button
-            type="button"
-            onClick={openDatePicker}
-            title="Set a due date"
-            aria-label={deadline ? `Due date ${formatDeadlineLabel(deadline)}, change` : 'Set due date'}
-            className="flex items-center gap-1.5 pl-2.5 pr-2 py-1 rounded-lg"
-          >
+          {/* Visual label (non-interactive — the input overlay handles taps) */}
+          <span className="flex items-center gap-1.5 pl-2.5 pr-2 py-1 pointer-events-none">
             <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
               <line x1="16" y1="2" x2="16" y2="6" />
@@ -131,13 +115,26 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             {deadline ? formatDeadlineLabel(deadline) : 'Due date'}
-          </button>
+          </span>
+
+          {/* Real date input, transparent and stretched over the label so a tap
+              anywhere on the pill opens the native picker. When a date is set it
+              stops short of the clear button so that stays tappable. */}
+          <input
+            type="date"
+            value={deadline}
+            onChange={e => setDeadline(e.target.value)}
+            title="Set a due date"
+            aria-label="Due date (optional)"
+            className={`absolute inset-y-0 left-0 opacity-0 cursor-pointer ${deadline ? 'right-7' : 'right-0'}`}
+          />
+
           {deadline && (
             <button
               type="button"
               onClick={() => setDeadline('')}
               aria-label="Clear due date"
-              className="flex items-center justify-center pr-2 py-1 text-indigo-400 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors"
+              className="relative z-10 flex items-center justify-center pr-2 py-1 text-indigo-400 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-200 transition-colors"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" />
@@ -146,17 +143,6 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
             </button>
           )}
         </div>
-
-        {/* Real date input, visually hidden but focusable — drives the pill above */}
-        <input
-          ref={dateInputRef}
-          type="date"
-          value={deadline}
-          onChange={e => setDeadline(e.target.value)}
-          aria-label="Due date (optional)"
-          className="sr-only"
-          tabIndex={-1}
-        />
       </div>
     </form>
   );
