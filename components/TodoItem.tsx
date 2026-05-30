@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, KeyboardEvent } from 'react';
+import { useState, useRef, useEffect, memo, KeyboardEvent } from 'react';
 import { Todo, PriorityLevel } from '@/types/todo';
 
 interface TodoItemProps {
@@ -23,6 +23,10 @@ const PRIORITY_BG: Record<PriorityLevel, string> = {
   low:    'bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/20',
 };
 
+// Constructed once at module load — building an Intl.DateTimeFormat is expensive
+// and must not happen on every render.
+const DEADLINE_FORMATTER = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' });
+
 function formatDeadline(deadline: number): { label: string; colorClass: string } {
   const today = new Date();
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
@@ -33,7 +37,7 @@ function formatDeadline(deadline: number): { label: string; colorClass: string }
   }
   if (diff === 0) return { label: 'Due today', colorClass: 'text-amber-500 dark:text-amber-400' };
   if (diff === 1) return { label: 'Due tomorrow', colorClass: 'text-gray-500 dark:text-gray-400' };
-  const label = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(deadline));
+  const label = DEADLINE_FORMATTER.format(new Date(deadline));
   return { label, colorClass: 'text-gray-400 dark:text-gray-500' };
 }
 
@@ -43,7 +47,7 @@ const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string 
   { value: 'low',    label: 'Low',    dotClass: 'bg-emerald-400' },
 ];
 
-export default function TodoItem({ todo, onToggle, onEdit, onDelete, onChangePriority }: TodoItemProps) {
+function TodoItem({ todo, onToggle, onEdit, onDelete, onChangePriority }: TodoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(todo.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -194,3 +198,8 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete, onChangePri
     </li>
   );
 }
+
+// Memoized so toggling/editing one todo only re-renders that row, not the whole
+// list. Safe because every handler prop is useCallback-stable in useTodos and
+// unchanged todo objects keep their identity across updates.
+export default memo(TodoItem);
