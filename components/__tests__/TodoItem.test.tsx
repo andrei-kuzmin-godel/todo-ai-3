@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import TodoItem from '@/components/TodoItem'
@@ -139,5 +139,73 @@ describe('inline priority selector', () => {
     render(<TodoItem {...defaultProps} onChangePriority={onChangePriority} />)
     await user.click(screen.getByRole('button', { name: 'Set High priority' }))
     expect(onChangePriority).toHaveBeenCalledWith('test-id', 'high')
+  })
+})
+
+describe('deadline display', () => {
+  // Pin "today" to 2026-05-30 (midnight local) for deterministic tests
+  const TODAY = new Date(2026, 4, 30).getTime() // month is 0-indexed
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(TODAY)
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('renders no <time> element when deadline is undefined', () => {
+    render(<TodoItem {...defaultProps} />)
+    expect(document.querySelector('time')).toBeNull()
+  })
+
+  it('renders no <time> element for a completed todo even with a deadline', () => {
+    const withDeadline: Todo = { ...completedTodo, deadline: TODAY }
+    render(<TodoItem {...defaultProps} todo={withDeadline} />)
+    expect(document.querySelector('time')).toBeNull()
+  })
+
+  it('shows "1 day overdue" in red for yesterday\'s deadline', () => {
+    const yesterday = new Date(2026, 4, 29).getTime()
+    const withDeadline: Todo = { ...todo, deadline: yesterday }
+    render(<TodoItem {...defaultProps} todo={withDeadline} />)
+    const time = document.querySelector('time')
+    expect(time).not.toBeNull()
+    expect(time!.textContent).toBe('1 day overdue')
+    expect(time!.className).toContain('text-red-500')
+  })
+
+  it('shows "2 days overdue" for two days ago', () => {
+    const twoDaysAgo = new Date(2026, 4, 28).getTime()
+    const withDeadline: Todo = { ...todo, deadline: twoDaysAgo }
+    render(<TodoItem {...defaultProps} todo={withDeadline} />)
+    expect(document.querySelector('time')!.textContent).toBe('2 days overdue')
+  })
+
+  it('shows "Due today" in amber for today\'s deadline', () => {
+    const withDeadline: Todo = { ...todo, deadline: TODAY }
+    render(<TodoItem {...defaultProps} todo={withDeadline} />)
+    const time = document.querySelector('time')
+    expect(time!.textContent).toBe('Due today')
+    expect(time!.className).toContain('text-amber-500')
+  })
+
+  it('shows "Due tomorrow" for tomorrow\'s deadline', () => {
+    const tomorrow = new Date(2026, 4, 31).getTime()
+    const withDeadline: Todo = { ...todo, deadline: tomorrow }
+    render(<TodoItem {...defaultProps} todo={withDeadline} />)
+    expect(document.querySelector('time')!.textContent).toBe('Due tomorrow')
+  })
+
+  it('shows a formatted date for a future deadline', () => {
+    const future = new Date(2026, 5, 15).getTime() // Jun 15
+    const withDeadline: Todo = { ...todo, deadline: future }
+    render(<TodoItem {...defaultProps} todo={withDeadline} />)
+    const time = document.querySelector('time')
+    expect(time).not.toBeNull()
+    // Formatted via Intl — just verify it contains the day number
+    expect(time!.textContent).toContain('15')
+    expect(time!.className).toContain('text-gray-400')
   })
 })

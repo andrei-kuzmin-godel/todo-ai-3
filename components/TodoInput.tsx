@@ -4,7 +4,7 @@ import { useState, FormEvent } from 'react';
 import { PriorityLevel } from '@/types/todo';
 
 interface TodoInputProps {
-  onAdd: (text: string, priority: PriorityLevel) => void;
+  onAdd: (text: string, priority: PriorityLevel, deadline?: number) => void;
 }
 
 const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string }[] = [
@@ -16,14 +16,21 @@ const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string 
 export default function TodoInput({ onAdd }: TodoInputProps) {
   const [value, setValue] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('medium');
+  const [deadline, setDeadline] = useState('');
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed) return;
-    onAdd(trimmed, priority);
+    let deadlineMs: number | undefined;
+    if (deadline) {
+      const [y, m, d] = deadline.split('-').map(Number);
+      deadlineMs = new Date(y, m - 1, d).getTime();
+    }
+    onAdd(trimmed, priority, deadlineMs);
     setValue('');
     setPriority('medium');
+    setDeadline('');
   };
 
   return (
@@ -70,6 +77,13 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
           </button>
         ))}
       </div>
+      <input
+        type="date"
+        value={deadline}
+        onChange={e => setDeadline(e.target.value)}
+        aria-label="Due date (optional)"
+        className="self-start px-3 py-1.5 rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all shadow-sm"
+      />
     </form>
   );
 }

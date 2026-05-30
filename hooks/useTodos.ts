@@ -43,7 +43,7 @@ export function useTodos() {
     }
   }, [todos, isLoaded]);
 
-  const addTodo = useCallback((text: string, priority: PriorityLevel = 'medium') => {
+  const addTodo = useCallback((text: string, priority: PriorityLevel = 'medium', deadline?: number) => {
     const trimmed = text.trim();
     if (!trimmed) return;
     setTodos(prev => [
@@ -53,6 +53,7 @@ export function useTodos() {
         completed: false,
         createdAt: Date.now(),
         priority,
+        ...(deadline !== undefined && { deadline }),
       },
       ...prev,
     ]);
@@ -101,6 +102,16 @@ export function useTodos() {
         const pa = PRIORITY_ORDER[a.priority ?? 'medium'];
         const pb = PRIORITY_ORDER[b.priority ?? 'medium'];
         return pa - pb;
+      });
+    }
+
+    if (sortMode === 'deadline') {
+      return [...filtered].sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        if (a.deadline == null && b.deadline == null) return 0;
+        if (a.deadline == null) return 1;
+        if (b.deadline == null) return -1;
+        return a.deadline - b.deadline;
       });
     }
 

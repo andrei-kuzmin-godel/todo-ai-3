@@ -23,6 +23,20 @@ const PRIORITY_BG: Record<PriorityLevel, string> = {
   low:    'bg-emerald-50 dark:bg-emerald-900/10 hover:bg-emerald-100 dark:hover:bg-emerald-900/20',
 };
 
+function formatDeadline(deadline: number): { label: string; colorClass: string } {
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const diff = Math.round((deadline - todayStart) / 86_400_000);
+  if (diff < 0) {
+    const n = Math.abs(diff);
+    return { label: `${n} day${n === 1 ? '' : 's'} overdue`, colorClass: 'text-red-500 dark:text-red-400' };
+  }
+  if (diff === 0) return { label: 'Due today', colorClass: 'text-amber-500 dark:text-amber-400' };
+  if (diff === 1) return { label: 'Due tomorrow', colorClass: 'text-gray-500 dark:text-gray-400' };
+  const label = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(new Date(deadline));
+  return { label, colorClass: 'text-gray-400 dark:text-gray-500' };
+}
+
 const PRIORITY_OPTIONS: { value: PriorityLevel; label: string; dotClass: string }[] = [
   { value: 'high',   label: 'High',   dotClass: 'bg-red-400' },
   { value: 'medium', label: 'Medium', dotClass: 'bg-yellow-400' },
@@ -117,6 +131,17 @@ export default function TodoItem({ todo, onToggle, onEdit, onDelete, onChangePri
             {todo.text}
           </span>
         )}
+        {!todo.completed && todo.deadline != null && (() => {
+          const { label, colorClass } = formatDeadline(todo.deadline);
+          return (
+            <time
+              dateTime={new Date(todo.deadline).toISOString().slice(0, 10)}
+              className={`block text-xs mt-0.5 ${colorClass}`}
+            >
+              {label}
+            </time>
+          );
+        })()}
       </div>
 
       {/* Action buttons */}

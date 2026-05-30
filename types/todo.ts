@@ -7,6 +7,7 @@ export interface Todo {
   completed: boolean;
   createdAt: number;
   priority?: PriorityLevel;
+  deadline?: number;  // ms timestamp (Date.getTime()); undefined = no deadline
 }
 
 export type FilterType = 'all' | 'active' | 'completed';
