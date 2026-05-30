@@ -38,6 +38,7 @@ function sameDay(a: Date, b: Date): boolean {
 
 export default function DatePicker({ value, onChange }: DatePickerProps) {
   const [open, setOpen] = useState(false);
+  const [alignRight, setAlignRight] = useState(true);
   // The month currently shown in the grid (only year+month matter).
   const [view, setView] = useState(() => (value ? parseYMD(value) : new Date()));
   const containerRef = useRef<HTMLDivElement>(null);
@@ -61,8 +62,15 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
   }, [open]);
 
   const handleToggle = () => {
-    // Re-anchor the grid on the selected month each time it opens.
-    if (!open) setView(value ? parseYMD(value) : new Date());
+    if (!open) {
+      // Re-anchor the grid on the selected month each time it opens.
+      setView(value ? parseYMD(value) : new Date());
+      // Open toward whichever side has more room.
+      if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        setAlignRight(rect.left > window.innerWidth / 2);
+      }
+    }
     setOpen(o => !o);
   };
 
@@ -122,7 +130,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
         <div
           role="dialog"
           aria-label="Choose due date"
-          className="absolute top-full right-0 mt-1 z-20 w-64 max-w-[calc(100vw-2rem)] p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 shadow-lg"
+          className={`absolute top-full mt-1 z-20 w-64 max-w-[calc(100vw-2rem)] p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 shadow-lg ${alignRight ? 'right-0' : 'left-0'}`}
         >
           <div className="flex items-center justify-between mb-2">
             <button
