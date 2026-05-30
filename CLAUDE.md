@@ -17,6 +17,24 @@ npm run test:coverage  # single run with coverage report
 - `hooks/__tests__/useTodos.test.ts` — hook unit tests (CRUD, computed values, localStorage)
 - `components/__tests__/Todo*.test.tsx` — component interaction tests
 
+## Browser debugging
+
+The app can be driven interactively in a real (headless) browser to debug and
+visually verify UI changes — not just via Vitest.
+
+- **Dev server**: `http://localhost:3000`. Dev mode has **no** basePath; the
+  `/todo-ai-3` basePath only applies to the static export (see Build modes), so
+  localhost works directly.
+- **Driver**: the **Playwright MCP server** (configured in `.mcp.json`) exposes
+  browser tools — `browser_navigate`, `browser_click`, `browser_type`,
+  `browser_snapshot` (accessibility tree), `browser_take_screenshot`,
+  `browser_console_messages`, `browser_network_requests`.
+- **Provisioning**: `.claude/hooks/session-start.sh` (a SessionStart hook) runs
+  each session to install the Playwright chromium binary and start the dev
+  server, since the remote container is wiped between sessions. The browser is
+  installed via the project-local Playwright pinned through `@playwright/mcp`, so
+  its revision matches the MCP server.
+
 ## Architecture
 
 - Next.js 16 App Router, **fully client-side** — every interactive file has `'use client'`
