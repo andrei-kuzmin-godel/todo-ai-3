@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useRef, useEffect, FormEvent } from 'react';
 import { PriorityLevel } from '@/types/todo';
 
 interface TodoInputProps {
@@ -28,6 +28,23 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
   const [value, setValue] = useState('');
   const [priority, setPriority] = useState<PriorityLevel>('medium');
   const [deadline, setDeadline] = useState('');
+  // Remembers the deadline at the moment the native picker opens, so an iOS
+  // "tap outside to dismiss" (which commits the shown date, then fires the
+  // input's `cancel` event) can be reverted to whatever was set before.
+  const deadlineBeforePicker = useRef('');
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  // The `cancel` event doesn't bubble, so React's root event delegation never
+  // sees it — attach the listener directly to the date input. Reverting to the
+  // pre-open value undoes the spurious change iOS fires when the picker is
+  // dismissed by tapping outside, while leaving real selections untouched.
+  useEffect(() => {
+    const input = dateInputRef.current;
+    if (!input) return;
+    const handleCancel = () => setDeadline(deadlineBeforePicker.current);
+    input.addEventListener('cancel', handleCancel);
+    return () => input.removeEventListener('cancel', handleCancel);
+  }, []);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -121,9 +138,11 @@ export default function TodoInput({ onAdd }: TodoInputProps) {
               anywhere on the pill opens the native picker. When a date is set it
               stops short of the clear button so that stays tappable. */}
           <input
+            ref={dateInputRef}
             type="date"
             value={deadline}
             onChange={e => setDeadline(e.target.value)}
+            onFocus={() => { deadlineBeforePicker.current = deadline; }}
             title="Set a due date"
             aria-label="Due date (optional)"
             className={`absolute inset-y-0 left-0 opacity-0 cursor-pointer ${deadline ? 'right-7' : 'right-0'}`}
