@@ -122,7 +122,7 @@ export default function DatePicker({ value, onChange }: DatePickerProps) {
         <div
           role="dialog"
           aria-label="Choose due date"
-          className="absolute top-full left-0 mt-1 z-20 w-64 p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 shadow-lg"
+          className="absolute top-full right-0 mt-1 z-20 w-64 max-w-[calc(100vw-2rem)] p-3 rounded-xl border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-100 shadow-lg"
         >
           <div className="flex items-center justify-between mb-2">
             <button
